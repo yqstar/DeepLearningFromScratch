@@ -31,6 +31,37 @@ def softmax(array):
     return exps / np.sum(exps)
 
 
+def cross_entropy(X, y):
+    """
+    X is the output from fully connected layer (num_examples x num_classes)
+    y is labels (num_examples x 1)
+    	Note that y is not one-hot encoded vector.
+    	It can be computed as y.argmax(axis=1) from one-hot encoded vectors of labels if required.
+    """
+    m = y.shape[0]
+    p = softmax(X)
+    # We use multidimensional array indexing to extract
+    # softmax probability of the correct label for each sample.
+    # Refer to https://docs.scipy.org/doc/numpy/user/basics.indexing.html#indexing-multi-dimensional-arrays for understanding multidimensional array indexing.
+    log_likelihood = -np.log(p[range(m), y])
+    loss = np.sum(log_likelihood) / m
+    return loss
+
+
+def delta_cross_entropy(X, y):
+    """
+    X is the output from fully connected layer (num_examples x num_classes)
+    y is labels (num_examples x 1)
+    	Note that y is not one-hot encoded vector.
+    	It can be computed as y.argmax(axis=1) from one-hot encoded vectors of labels if required.
+    """
+    m = y.shape[0]
+    grad = softmax(X)
+    grad[range(m), y] -= 1
+    grad = grad / m
+    return grad
+
+
 def onehot(num_class, label_array):
     return np.eye(num_class)[label_array]
     # max_label = np.max(label_array)
@@ -61,8 +92,27 @@ class DeepNeuralNetwork(object):
     def backward(self, feature_array, label_array, lr=0.001, iteration=50):
         label_onehot = onehot(self.num_class, label_array)
         n_sample = len(feature_array)
-        out_softmax= Utils.softmax(np.dot(Utils.sigmoid(np.dot(feature_array, self.w1) + self.b1), self.w2) + self.b2)
+        out_y = np.dot(Utils.sigmoid(np.dot(feature_array, self.w1) + self.b1), self.w2) + self.b2
+        out_softmax = Utils.softmax(out_y)
         loss_ce = np.dot(label_onehot, np.log(out_softmax))
+
+
+        grad_dw2 = np.dot(delta_cross_entropy(out_y,label_array),np.dot(feature_array, self.w1) + self.b1)
+        grad_db2 = delta_cross_entropy(out_y,label_array)
+
+
+
+        grad_dw1 = np.dot(grad_dw2,)
+        grad_db1 = np.dot(grad_db2,)
+
+        self.w1 = self.w1 - lr * grad_dw1
+        self.b1 = self.b1 - lr * grad_db1
+        self.w2 = self.w2 - lr * grad_dw2
+        self.b2 = self.b2 - lr * grad_db2
+
+
+
+
 
         return True
 
