@@ -31,35 +31,45 @@ def softmax(array):
     return exps / np.sum(exps)
 
 
-def cross_entropy(X, y):
-    """
-    X is the output from fully connected layer (num_examples x num_classes)
-    y is labels (num_examples x 1)
-    	Note that y is not one-hot encoded vector.
-    	It can be computed as y.argmax(axis=1) from one-hot encoded vectors of labels if required.
-    """
-    m = y.shape[0]
-    p = softmax(X)
-    # We use multidimensional array indexing to extract
-    # softmax probability of the correct label for each sample.
-    # Refer to https://docs.scipy.org/doc/numpy/user/basics.indexing.html#indexing-multi-dimensional-arrays for understanding multidimensional array indexing.
-    log_likelihood = -np.log(p[range(m), y])
-    loss = np.sum(log_likelihood) / m
-    return loss
+def der_softmax_cross_entropy(num_class, label_array, pre_array):
+    # y_act = onehot(num_class,label_array)
+    y_act = label_array
+    y_hat = pre_array
+    return y_hat - y_act
 
 
-def delta_cross_entropy(X, y):
-    """
-    X is the output from fully connected layer (num_examples x num_classes)
-    y is labels (num_examples x 1)
-    	Note that y is not one-hot encoded vector.
-    	It can be computed as y.argmax(axis=1) from one-hot encoded vectors of labels if required.
-    """
-    m = y.shape[0]
-    grad = softmax(X)
-    grad[range(m), y] -= 1
-    grad = grad / m
-    return grad
+def sigmoid(x):
+    """sigmoid函数"""
+    return 1 / (1 + np.exp(-x))
+
+
+def der_sigmoid(x):
+    """sigmoid函数的导数"""
+    return sigmoid(x) * (1 - sigmoid(x))
+
+
+def tanh(x):
+    """tanh函数"""
+    return ((np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x)))
+
+
+def der_tanh(x):
+    """tanh函数的导数"""
+    return 1 - tanh(x) * tanh(x)
+
+
+def relu(x):
+    """relu函数"""
+    temp = np.zeros_like(x)
+    if_bigger_zero = (x > temp)
+    return x * if_bigger_zero
+
+
+def der_relu(x):
+    """relu函数的导数"""
+    temp = np.zeros_like(x)
+    if_bigger_equal_zero = (x >= temp)
+    return if_bigger_equal_zero * np.ones_like(x)
 
 
 def onehot(num_class, label_array):
@@ -74,47 +84,59 @@ def onehot(num_class, label_array):
 
 
 class DeepNeuralNetwork(object):
-    def __init__(self, input_x, hidden, out_y, num_class):
-        self.input_x = input_x
-        self.hidden = hidden
-        self.out_y = out_y
-        self.w1 = np.random.rand(self.input_x, self.hidden)
-        self.b1 = np.random.rand(60000, 1)
-        self.w2 = np.random.rand(self.hidden, self.out_y)
-        self.b2 = np.random.rand(60000, 1)
-        self.num_class = num_class
+    def __init__(self, x_input, y_out, num_hidden, num_class):
+        self.num_sample = x_input.shape[0]
+        self.num_input = x_input.shape[1]
+        self.num_hidden = num_hidden
+        self.num_out = num_class
+        self.w1 = np.random.rand(self.num_input, self.num_hidden)
+        self.b1 = np.random.rand(self.num_sample, 1)
+        self.w2 = np.random.rand(self.num_hidden, self.num_out)
+        self.b2 = np.random.rand(self.num_sample, 1)
+
+    # def __str__(self):
+    #     pass
 
     def forward(self, feature_array):
-        hidden_layer = Utils.sigmoid(np.dot(feature_array, self.w1) + self.b1)
-        out_layer = Utils.softmax(np.dot(hidden_layer, self.w2) + self.b2)
-        return out_layer, np.argmax(out_layer, axis=1)
+        A1 = np.dot(feature_array, self.w1) + self.b1
+        Z1 = Utils.sigmoid(A1)
+        A2 = np.dot(Z1, self.w2) + self.b2
+        Z2 = Utils.softmax(A2)
+        # hidden_layer = Utils.sigmoid(np.dot(feature_array, self.w1) + self.b1)
+        # out_layer = Utils.softmax(np.dot(hidden_layer, self.w2) + self.b2)
+        cache = {"Z1": Z1,
+                 "A1": A1,
+                 "Z2": Z2,
+                 "A2": A2}
+        return A2,cache
+
 
     def backward(self, feature_array, label_array, lr=0.001, iteration=50):
+        A2,cache = self.forward(feature_array)
+
+
+
+
+        dZ2_A2 = onehot(self.num_out,label_array)
+
         label_onehot = onehot(self.num_class, label_array)
         n_sample = len(feature_array)
-        out_y = np.dot(Utils.sigmoid(np.dot(feature_array, self.w1) + self.b1), self.w2) + self.b2
-        out_softmax = Utils.softmax(out_y)
+        out_softmax = Utils.softmax(np.dot(Utils.sigmoid(np.dot(feature_array, self.w1) + self.b1), self.w2) + self.b2)
         loss_ce = np.dot(label_onehot, np.log(out_softmax))
 
+        out_hidden = Utils.sigmoid(np.dot(feature_array, self.w1) + self.b1)
 
-        grad_dw2 = np.dot(delta_cross_entropy(out_y,label_array),np.dot(feature_array, self.w1) + self.b1)
-        grad_db2 = delta_cross_entropy(out_y,label_array)
+        dL_ce_softmax = der_softmax_cross_entropy(10, label_onehot, out_softmax)
 
-
-
-        grad_dw1 = np.dot(grad_dw2,)
-        grad_db1 = np.dot(grad_db2,)
-
-        self.w1 = self.w1 - lr * grad_dw1
-        self.b1 = self.b1 - lr * grad_db1
-        self.w2 = self.w2 - lr * grad_dw2
-        self.b2 = self.b2 - lr * grad_db2
-
-
-
-
+        dw2 = np.dot(Utils.sigmoid(np.dot(feature_array, self.w1) + self.b1).T, dL_ce_softmax) // 4 * 2
+        db2 = dL_ce_softmax
+        # dw1 = dw2 *
+        dz1 = der_sigmoid(np.dot(feature_array, self.w1) + self.b1)
+        dw1 = np.dot(dw2 *, )
+        db1 =
 
         return True
+
 
     @staticmethod
     def cross_entropy(p, q):
@@ -284,3 +306,11 @@ if __name__ == '__main__':
 # train_network(network, dataset, 0.5, 20, n_outputs)
 # for layer in network:
 #     print(layer)
+
+# import torch
+# from torch import nn
+#
+#
+# class DNN(nn.Module):
+#     def __init__(self):
+#         super(DNN)
