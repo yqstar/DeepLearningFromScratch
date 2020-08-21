@@ -4,7 +4,7 @@ from sklearn import datasets
 
 class DataProcess(object):
     @staticmethod
-    def load_data(file_name):
+    def load_data(file_name,binary_classification=True):
         '''
         加载Mnist数据集
         :param file_name:要加载的数据集路径
@@ -21,15 +21,18 @@ class DataProcess(object):
             # 对每一行数据按切割福','进行切割，返回字段列表
             curLine = line.strip().split(',')
 
-            # Mnsit有0-9是个标记，由于是二分类任务，所以将>=5的作为1，<5为-1
-            if int(curLine[0]) >= 5:
-                labelArr.append(1)
+            if binary_classification:
+                # Mnsit有0-9是个标记，由于是二分类任务，所以将>=5的作为1，<5为-1
+                if int(curLine[0]) >= 5:
+                    labelArr.append(1)
+                else:
+                    labelArr.append(-1)
             else:
-                labelArr.append(-1)
+                labelArr.append(int(curLine[0]))
             # 存放标记
             # [int(num) for num in curLine[1:]] -> 遍历每一行中除了以第一哥元素（标记）外将所有元素转换成int类型
             # [int(num)/255 for num in curLine[1:]] -> 将所有数据除255归一化(非必须步骤，可以不归一化)
-            dataArr.append([int(num) / 255 for num in curLine[1:]])
+            dataArr.append([int(num) / 255.0 for num in curLine[1:]])
 
         # 返回data和label
         return np.array(dataArr), np.array(labelArr)
