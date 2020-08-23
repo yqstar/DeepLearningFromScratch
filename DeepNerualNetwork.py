@@ -20,6 +20,7 @@
 import numpy as np
 import time
 from DataProcess import DataProcess
+
 np.random.seed(0)
 
 
@@ -79,6 +80,13 @@ def softmax(array):
     return array
 
 
+def cross_entropy(x, y):
+    x_softmax = [softmax(x[i]) for i in range(len(x))]
+    x_log = [np.log(x_softmax[i][y[i]]) for i in range(len(y))]
+    loss = - np.sum(x_log) / len(y)
+    return loss
+
+
 def der_cross_entropy_softmax(act_array, pre_array):
     """
     用于计算经softmax后的Cross Entropy的梯度
@@ -114,7 +122,7 @@ class DeepNeuralNetwork(object):
         self.b2 = np.random.rand(self.num_sample, 1)
 
     def forward(self, feature_array):
-        # print("Forward Propagation")
+        print("Forward Propagation")
         A1 = np.dot(feature_array, self.w1) + self.b1
         # Z1 = sigmoid(A1)
         Z1 = relu(A1)
@@ -130,7 +138,7 @@ class DeepNeuralNetwork(object):
         return Z2, cache
 
     def backward(self, feature_array, label_array, learning_rate=0.1):
-        # print("Backward Propagation")
+        print("Backward Propagation")
         Z2, cache = self.forward(feature_array)
         label_array_onehot = one_hot(self.num_out, label_array)
 
@@ -139,28 +147,21 @@ class DeepNeuralNetwork(object):
         A2 = cache['A2']
         Z1 = cache['Z1']
         A1 = cache['A1']
-        # print("Z2 shape", Z2.shape)
-        # print("A2 shape", A2.shape)
-        # print("Z1 shape", Z1.shape)
-        # print("A1 shape", A1.shape)
+        print("Z2 shape", Z2.shape)
+        print("A2 shape", A2.shape)
+        print("Z1 shape", Z1.shape)
+        print("A1 shape", A1.shape)
 
         dL_A2 = der_cross_entropy_softmax(label_array_onehot, Z2)
-        # print("dL_A2 shape", dL_A2.shape)
-        # dW2 = 1/m * np.dot(Z1.T, dL_A2)
-        m = dL_A2.shape[1]
-        dW2 = np.dot(Z1.T, dL_A2)
-        db2 = 1 / m * np.sum(dL_A2, axis=1, keepdims=True)
-        db2 = np.sum(dL_A2, axis=1, keepdims=True)
+        print("dL_A2 shape", dL_A2.shape)
+        dW2 = 1 / self.num_sample * np.dot(Z1.T, dL_A2)
+        db2 = 1 / self.num_sample * np.sum(dL_A2, axis=1, keepdims=True)
 
-        # print("w2 shape", self.w2.shape)
         # dL_A1 = np.dot(dL_A2, self.w2.T) * der_sigmoid(A1)
         dL_A1 = np.dot(dL_A2, self.w2.T) * der_relu(A1)
-        # print("dL_A1 shape", dL_A1.shape)
-        n = dL_A1.shape[1]
-        # dW1 = 1/m * np.dot(feature_array.T, dL_A1)
-        dW1 = np.dot(feature_array.T, dL_A1)
-        db1 = 1 / n * np.sum(dL_A1, axis=1, keepdims=True)
-        # db1 = np.sum(dL_A1, axis=1, keepdims=True)
+        print("dL_A1 shape", dL_A1.shape)
+        dW1 = 1 / self.num_sample * np.dot(feature_array.T, dL_A1)
+        db1 = 1 / self.num_sample * np.sum(dL_A1, axis=1, keepdims=True)
 
         # 参数更新
         self.w1 -= dW1 * learning_rate
@@ -198,16 +199,17 @@ if __name__ == '__main__':
     # 获取测试集及标签
     # testData, testLabel = DataProcess.load_data('./data/Mnist/mnist_test.csv',binary_classification=False)
     # 实例化感知机，输入特征为4
-    dnn = DeepNeuralNetwork(trainData, trainLabel, 64, 10)
-    for i in range(100):
+    dnn = DeepNeuralNetwork(trainData, trainLabel, 88, 10)
+    for i in range(500):
         grads = dnn.backward(trainData, trainLabel)
         # dnn.update_parameters(grads, learning_rate=0.01)
         # print(dnn.w1.max())
         label_pre, cache_test = dnn.forward(trainData)
-        loss_ce = -np.mean(np.sum(np.multiply(one_hot(10, trainLabel), np.log(label_pre)), axis=1))
+        # loss_ce = -np.mean(np.sum(np.multiply(one_hot(10, trainLabel), np.log(label_pre)), axis=1))
+        loss_ce = cross_entropy(label_pre, trainLabel)
         acc = np.sum(trainLabel == np.argmax(label_pre, axis=1)) / trainLabel.shape[0]
-        # if not i % 50:
-        print("Iter", i, "Loss", loss_ce, "Acc", acc)
+        if not i % 50:
+            print("Iter", i, "Loss", loss_ce, "Acc", acc)
     end = time.time()
     # 显示用时时长
     print('time span:', end - start)
