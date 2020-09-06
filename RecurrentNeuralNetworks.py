@@ -1,10 +1,6 @@
 # http://songhuiming.github.io/pages/2017/08/12/build-neural-network-from-scratch/
 # https://songhuiming.github.io/pages/2017/08/20/build-recurrent-neural-network-from-scratch/
 # https://songhuiming.github.io/category/python.html
-
-# http://songhuiming.github.io/pages/2017/08/12/build-neural-network-from-scratch/
-# https://songhuiming.github.io/pages/2017/08/20/build-recurrent-neural-network-from-scratch/
-# https://songhuiming.github.io/category/python.html
 # https://zybuluo.com/hanbingtao/note/541458
 
 import csv
@@ -77,7 +73,7 @@ class RecurrentNeuralNetworks:
         o = np.zeros((T, self.word_dim))
         # For each time step...
         for t in np.arange(T):
-            # Note that we are indxing U by x[t]. This is the same as multiplying U with a one-hot vector.
+            # Note that we are indexing U by x[t]. This is the same as multiplying U with a one-hot vector.
             s[t] = np.tanh(self.U[:, x[t]] + self.W.dot(s[t - 1]))
             o[t] = softmax(self.V.dot(s[t]))
         return [o, s]
@@ -200,7 +196,7 @@ class RecurrentNeuralNetworks:
                     learning_rate = learning_rate * 0.5
                     print("Setting learning rate to %f" % learning_rate)
                 sys.stdout.flush()
-                # ADDED! Saving model oarameters
+                # ADDED! Saving model parameters
                 save_model_parameters_numpy("./data/rnn-numpy-%d-%d-%s.npz" % (self.hidden_dim, self.word_dim, time),
                                             self)
             # For each training example...
@@ -217,11 +213,12 @@ def read_sentences_from_csv(path, sentence_start_token, sentence_end_token):
         reader = csv.reader(f)
         for row in reader:
             print(row)
+            # tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
             # Split full comments into sentences
             # sentences = itertools.chain(*[nltk.sent_tokenize(x[0].decode('utf-8').lower()) for x in reader])
             sentences = itertools.chain(*[nltk.sent_tokenize(x[0].lower()) for x in reader])
             # Append SENTENCE_START and SENTENCE_END
-            sentences = ["%s %s %s" % (sentence_start_token, x, sentence_end_token) for x in sentences]
+            # sentences = ["%s %s %s" % (sentence_start_token, x, sentence_end_token) for x in sentences]
     # print(type(reader))
     # for row in reader:
     #     print(row)
@@ -237,8 +234,8 @@ def read_sentences_from_csv(path, sentence_start_token, sentence_end_token):
     #     sentences = itertools.chain(*[nltk.sent_tokenize(x[0].decode('utf-8').lower()) for x in reader])
     #     # Append SENTENCE_START and SENTENCE_END
     #     sentences = ["%s %s %s" % (sentence_start_token, x, sentence_end_token) for x in sentences]
-    print("Parsed %d sentences." % (len(sentences)))
-    return sentences
+    # print("Parsed %d sentences." % (len(sentences)))
+    # return sentences
 
 
 def build_vocabulary(tokenized_sentences, vocabulary_size, unknown_token):
@@ -257,13 +254,6 @@ def build_vocabulary(tokenized_sentences, vocabulary_size, unknown_token):
 
     return [index_to_word, word_to_index]
 
-
-
-
-
-# from utils import *
-# from rnn_theano import RNNTheano
-# from rnn_numpy import RNNNumpy
 
 class Config:
     _DATASET_FILE = os.environ.get('DATASET_FILE', './data/small-dataset.csv')
@@ -310,248 +300,3 @@ def train_numpy():
         print("start saving model...")
         save_model_parameters_numpy(Config._MODEL_FILE, model)
         print("model saved!")
-
-
-
-# train_numpy()
-
-# def train_theano():
-#     model = RNNTheano(Config._VOCABULARY_SIZE, hidden_dim=Config._HIDDEN_DIM)
-#     t1 = time.time()
-#     model.sgd_step(X_train[10], y_train[10], Config._LEARNING_RATE)
-#     t2 = time.time()
-#     print "SGD Step time: %f milliseconds" % ((t2 - t1) * 1000.)
-#
-#     model.train_with_sgd(X_train, y_train, nepoch=Config._NEPOCH, learning_rate=Config._LEARNING_RATE)
-#
-#     if Config._MODEL_FILE != None:
-#         print "start saving model..."
-#         save_model_parameters_theano(Config._MODEL_FILE, model)
-#         print "model saved!"
-
-# train_theano()
-
-# from functools import reduce
-#
-# import numpy as np
-#
-#
-# def relu(array):
-#     return np.exp(array) / (1 + np.exp(array))
-#
-#
-# def der_relu(array):
-#     pass
-#
-#
-# class RNN(object):
-#     def __init__(self, num_class):
-#         self.num_class = num_class
-#         pass
-#
-#     def forward(self):
-#         pass
-#
-#     def backward(self):
-#         pass
-#
-#     def gradient_check(self):
-#         pass
-#
-#
-# # !/usr/bin/env python
-# # -*- coding: UTF-8 -*-
-#
-#
-# import numpy as np
-#
-#
-# # from cnn import element_wise_op
-# # from activators import ReluActivator, IdentityActivator
-#
-# # 对numpy数组进行element wise操作
-# def element_wise_op(array, op):
-#     for i in np.nditer(array,
-#                        op_flags=['readwrite']):
-#         i[...] = op(i)
-#
-#
-# import numpy as np
-#
-#
-# class ReluActivator(object):
-#     def forward(self, weighted_input):
-#         # return weighted_input
-#         return max(0, weighted_input)
-#
-#     def backward(self, output):
-#         return 1 if output > 0 else 0
-#
-#
-# class IdentityActivator(object):
-#     def forward(self, weighted_input):
-#         return weighted_input
-#
-#     def backward(self, output):
-#         return 1
-#
-#
-# class SigmoidActivator(object):
-#     def forward(self, weighted_input):
-#         return 1.0 / (1.0 + np.exp(-weighted_input))
-#
-#     def backward(self, output):
-#         return output * (1 - output)
-#
-#
-# class TanhActivator(object):
-#     def forward(self, weighted_input):
-#         return 2.0 / (1.0 + np.exp(-2 * weighted_input)) - 1.0
-#
-#     def backward(self, output):
-#         return 1 - output * output
-#
-#
-# class RecurrentLayer(object):
-#     def __init__(self, input_width, state_width,
-#                  activator, learning_rate):
-#         self.input_width = input_width
-#         self.state_width = state_width
-#         self.activator = activator
-#         self.learning_rate = learning_rate
-#         self.times = 0  # 当前时刻初始化为t0
-#         self.state_list = []  # 保存各个时刻的state
-#         self.state_list.append(np.zeros(
-#             (state_width, 1)))  # 初始化s0
-#         self.U = np.random.uniform(-1e-4, 1e-4,
-#                                    (state_width, input_width))  # 初始化U
-#         self.W = np.random.uniform(-1e-4, 1e-4,
-#                                    (state_width, state_width))  # 初始化W
-#
-#     def forward(self, input_array):
-#         '''
-#         根据『式2』进行前向计算
-#         '''
-#         self.times += 1
-#         state = (np.dot(self.U, input_array) +
-#                  np.dot(self.W, self.state_list[-1]))
-#         element_wise_op(state, self.activator.forward)
-#         self.state_list.append(state)
-#
-#     def backward(self, sensitivity_array,
-#                  activator):
-#         '''
-#         实现BPTT算法
-#         '''
-#         self.calc_delta(sensitivity_array, activator)
-#         self.calc_gradient()
-#
-#     def update(self):
-#         '''
-#         按照梯度下降，更新权重
-#         '''
-#         self.W -= self.learning_rate * self.gradient
-#
-#     def calc_delta(self, sensitivity_array, activator):
-#         self.delta_list = []  # 用来保存各个时刻的误差项
-#         for i in range(self.times):
-#             self.delta_list.append(np.zeros(
-#                 (self.state_width, 1)))
-#         self.delta_list.append(sensitivity_array)
-#         # 迭代计算每个时刻的误差项
-#         for k in range(self.times - 1, 0, -1):
-#             self.calc_delta_k(k, activator)
-#
-#     def calc_delta_k(self, k, activator):
-#         '''
-#         根据k+1时刻的delta计算k时刻的delta
-#         '''
-#         state = self.state_list[k + 1].copy()
-#         element_wise_op(self.state_list[k + 1],
-#                         activator.backward)
-#         self.delta_list[k] = np.dot(
-#             np.dot(self.delta_list[k + 1].T, self.W),
-#             np.diag(state[:, 0])).T
-#
-#     def calc_gradient(self):
-#         self.gradient_list = []  # 保存各个时刻的权重梯度
-#         for t in range(self.times + 1):
-#             self.gradient_list.append(np.zeros(
-#                 (self.state_width, self.state_width)))
-#         for t in range(self.times, 0, -1):
-#             self.calc_gradient_t(t)
-#         # 实际的梯度是各个时刻梯度之和
-#         self.gradient = reduce(
-#             lambda a, b: a + b, self.gradient_list,
-#             self.gradient_list[0])  # [0]被初始化为0且没有被修改过
-#
-#     def calc_gradient_t(self, t):
-#         '''
-#         计算每个时刻t权重的梯度
-#         '''
-#         gradient = np.dot(self.delta_list[t],
-#                           self.state_list[t - 1].T)
-#         self.gradient_list[t] = gradient
-#
-#     def reset_state(self):
-#         self.times = 0  # 当前时刻初始化为t0
-#         self.state_list = []  # 保存各个时刻的state
-#         self.state_list.append(np.zeros(
-#             (self.state_width, 1)))  # 初始化s0
-#
-#
-# def data_set():
-#     x = [np.array([[1], [2], [3]]),
-#          np.array([[2], [3], [4]])]
-#     d = np.array([[1], [2]])
-#     return x, d
-#
-#
-# def gradient_check():
-#     '''
-#     梯度检查
-#     '''
-#     # 设计一个误差函数，取所有节点输出项之和
-#     error_function = lambda o: o.sum()
-#
-#     rl = RecurrentLayer(3, 2, IdentityActivator(), 1e-3)
-#
-#     # 计算forward值
-#     x, d = data_set()
-#     rl.forward(x[0])
-#     rl.forward(x[1])
-#
-#     # 求取sensitivity map
-#     sensitivity_array = np.ones(rl.state_list[-1].shape,
-#                                 dtype=np.float64)
-#     # 计算梯度
-#     rl.backward(sensitivity_array, IdentityActivator())
-#
-#     # 检查梯度
-#     epsilon = 10e-4
-#     for i in range(rl.W.shape[0]):
-#         for j in range(rl.W.shape[1]):
-#             rl.W[i, j] += epsilon
-#             rl.reset_state()
-#             rl.forward(x[0])
-#             rl.forward(x[1])
-#             err1 = error_function(rl.state_list[-1])
-#             rl.W[i, j] -= 2 * epsilon
-#             rl.reset_state()
-#             rl.forward(x[0])
-#             rl.forward(x[1])
-#             err2 = error_function(rl.state_list[-1])
-#             expect_grad = (err1 - err2) / (2 * epsilon)
-#             rl.W[i, j] += epsilon
-#             print('weights(%d,%d): expected - actural %f - %f' % (
-#                 i, j, expect_grad, rl.gradient[i, j]))
-#
-#
-# def test():
-#     l = RecurrentLayer(3, 2, ReluActivator(), 1e-3)
-#     x, d = data_set()
-#     l.forward(x[0])
-#     l.forward(x[1])
-#     l.backward(d, ReluActivator())
-#     return l
-
