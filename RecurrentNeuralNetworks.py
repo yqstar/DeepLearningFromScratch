@@ -73,7 +73,7 @@ class RecurrentNeuralNetworks:
         o = np.zeros((T, self.word_dim))
         # For each time step...
         for t in np.arange(T):
-            # Note that we are indexing U by x[t]. This is the same as multiplying U with a one-hot vector.
+            # Note that we are indxing U by x[t]. This is the same as multiplying U with a one-hot vector.
             s[t] = np.tanh(self.U[:, x[t]] + self.W.dot(s[t - 1]))
             o[t] = softmax(self.V.dot(s[t]))
         return [o, s]
@@ -180,7 +180,7 @@ class RecurrentNeuralNetworks:
     # - learning_rate: Initial learning rate for SGD
     # - nepoch: Number of times to iterate through the complete dataset
     # - evaluate_loss_after: Evaluate the loss after this many epochs
-    def train_with_sgd(self, X_train, y_train, learning_rate=0.005, nepoch=100, evaluate_loss_after=5):
+    def train_with_sgd(self, X_train, y_train, learning_rate=0.005, nepoch=1000, evaluate_loss_after=5):
         # We keep track of the losses so we can plot them later
         losses = []
         num_examples_seen = 0
@@ -196,7 +196,7 @@ class RecurrentNeuralNetworks:
                     learning_rate = learning_rate * 0.5
                     print("Setting learning rate to %f" % learning_rate)
                 sys.stdout.flush()
-                # ADDED! Saving model parameters
+                # ADDED! Saving model oarameters
                 save_model_parameters_numpy("./data/rnn-numpy-%d-%d-%s.npz" % (self.hidden_dim, self.word_dim, time),
                                             self)
             # For each training example...
@@ -208,34 +208,16 @@ class RecurrentNeuralNetworks:
 
 def read_sentences_from_csv(path, sentence_start_token, sentence_end_token):
     print("Reading CSV file...")
-
-    with open(path, 'r') as f:
-        reader = csv.reader(f)
+    with open(path) as f:
+        reader = csv.reader(f, skipinitialspace=True)
         for row in reader:
-            print(row)
-            # tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+            # reader = next(reader)
             # Split full comments into sentences
-            # sentences = itertools.chain(*[nltk.sent_tokenize(x[0].decode('utf-8').lower()) for x in reader])
             sentences = itertools.chain(*[nltk.sent_tokenize(x[0].lower()) for x in reader])
             # Append SENTENCE_START and SENTENCE_END
-            # sentences = ["%s %s %s" % (sentence_start_token, x, sentence_end_token) for x in sentences]
-    # print(type(reader))
-    # for row in reader:
-    #     print(row)
-    #     # Split full comments into sentences
-    #     sentences = itertools.chain(*[nltk.sent_tokenize(x[0].decode('utf-8').lower()) for x in reader])
-    #     # Append SENTENCE_START and SENTENCE_END
-    #     sentences = ["%s %s %s" % (sentence_start_token, x, sentence_end_token) for x in sentences]
-    # with open(path) as f:
-    #     reader = csv.reader(f, skipinitialspace=True)
-    #     # reader.next()
-    #     # reader = next(reader)
-    #     # Split full comments into sentences
-    #     sentences = itertools.chain(*[nltk.sent_tokenize(x[0].decode('utf-8').lower()) for x in reader])
-    #     # Append SENTENCE_START and SENTENCE_END
-    #     sentences = ["%s %s %s" % (sentence_start_token, x, sentence_end_token) for x in sentences]
-    # print("Parsed %d sentences." % (len(sentences)))
-    # return sentences
+            sentences = ["%s %s %s" % (sentence_start_token, x, sentence_end_token) for x in sentences]
+    print("Parsed %d sentences." % (len(sentences)))
+    return sentences
 
 
 def build_vocabulary(tokenized_sentences, vocabulary_size, unknown_token):
@@ -259,14 +241,14 @@ class Config:
     _DATASET_FILE = os.environ.get('DATASET_FILE', './data/small-dataset.csv')
     _MODEL_FILE = os.environ.get('MODEL_FILE', './data/small_rnn_model.npz')
 
-    _VOCABULARY_SIZE = int(os.environ.get('VOCABULARY_SIZE', '20'))
+    _VOCABULARY_SIZE = int(os.environ.get('VOCABULARY_SIZE', '40'))
     _UNKNOWN_TOKEN = "UNKNOWN_TOKEN"
     _SENTENCE_START_TOKEN = "SENTENCE_START"
     _SENTENCE_END_TOKEN = "SENTENCE_END"
 
     _HIDDEN_DIM = int(os.environ.get('HIDDEN_DIM', '20'))
     _LEARNING_RATE = float(os.environ.get('LEARNING_RATE', '0.005'))
-    _NEPOCH = int(os.environ.get('NEPOCH', '10'))
+    _NEPOCH = int(os.environ.get('NEPOCH', '300'))
 
 
 # Read the data and append SENTENCE_START and SENTENCE_END tokens
@@ -300,3 +282,6 @@ def train_numpy():
         print("start saving model...")
         save_model_parameters_numpy(Config._MODEL_FILE, model)
         print("model saved!")
+
+
+train_numpy()
